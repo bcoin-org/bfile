@@ -1,6 +1,6 @@
 {
   "name": "bfile",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Filesystem wrapper for node.js",
   "keywords": [
     "file",
