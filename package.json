@@ -19,7 +19,6 @@
     "test": "mocha --reporter spec test/*-test.js"
   },
   "devDependencies": {
-    "eslint": "^5.1.0",
     "mocha": "^5.2.0"
   },
   "engines": {
