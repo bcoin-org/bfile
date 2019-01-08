@@ -16,7 +16,7 @@ all code is your original work. `</legalese>`
 
 ## License
 
-- Copyright (c) 2017, Christopher Jeffrey (MIT License).
+- Copyright (c) 2014-2019, Christopher Jeffrey (MIT License).
 
 See LICENSE for more info.
 
