@@ -19,5 +19,3 @@ all code is your original work. `</legalese>`
 - Copyright (c) 2014-2019, Christopher Jeffrey (MIT License).
 
 See LICENSE for more info.
-
-[gc]: https://en.wikipedia.org/wiki/Golomb_coding
