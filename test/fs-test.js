@@ -5,10 +5,11 @@
 'use strict';
 
 const assert = require('assert');
-const {resolve} = require('path');
+const {relative, resolve} = require('path');
 const fs = require('../');
 const {COPYFILE_EXCL} = fs.constants;
 
+const ROOT = resolve(__dirname, '..');
 const REAL_LIB = resolve(__dirname, '..', 'lib');
 const DATA = resolve(__dirname, 'data');
 const LIB = resolve(DATA, 'lib');
@@ -24,7 +25,27 @@ const LIB_FILES = [
   'fs.js',
   'legacy.js',
   'modern.js',
-  'util.js'
+  'util.js',
+  'walk.js'
+];
+
+const WALK_FILES = [
+  ['test', 0],
+  ['test/data', 1],
+  ['test/data/lib', 2],
+  ['test/data/lib/backend.js', 3],
+  ['test/data/lib/bfile.js', 3],
+  ['test/data/lib/compat.js', 3],
+  ['test/data/lib/error.js', 3],
+  ['test/data/lib/extra.js', 3],
+  ['test/data/lib/features.js', 3],
+  ['test/data/lib/fs-browser.js', 3],
+  ['test/data/lib/fs.js', 3],
+  ['test/data/lib/legacy.js', 3],
+  ['test/data/lib/modern.js', 3],
+  ['test/data/lib/util.js', 3],
+  ['test/data/lib/walk.js', 3],
+  ['test/fs-test.js', 1]
 ];
 
 function validateLib() {
@@ -54,6 +75,14 @@ function validateLib() {
 
 function sortDirent(a, b) {
   return a.name.localeCompare(b.name);
+}
+
+function validateWalk(list) {
+  assert.deepStrictEqual(list.sort(sortWalk), WALK_FILES);
+}
+
+function sortWalk([a], [b]) {
+  return a.localeCompare(b);
 }
 
 if (!assert.rejects) {
@@ -115,6 +144,25 @@ describe('FS', function() {
       assert.throws(() => {
         fs.copySync(REAL_LIB, LIB, COPYFILE_EXCL);
       }, /EEXIST/);
+    });
+
+    it('should do synchronous walk', () => {
+      const list = [];
+
+      for (const [file, , depth] of fs.walkSync(__dirname))
+        list.push([relative(ROOT, file), depth]);
+
+      validateWalk(list);
+    });
+
+    it('should do synchronous traverse', () => {
+      const list = [];
+
+      fs.traverseSync(__dirname, (file, stat, depth) => {
+        list.push([relative(ROOT, file), depth]);
+      });
+
+      validateWalk(list);
     });
 
     it('should do rimraf (2)', () => {
@@ -184,6 +232,33 @@ describe('FS', function() {
       await assert.rejects(async () => {
         await fs.copy(REAL_LIB, LIB, COPYFILE_EXCL);
       }, /EEXIST/);
+    });
+
+    it('should do asynchronous walk', async (ctx) => {
+      if (!fs.walk)
+        ctx.skip();
+
+      const list = [];
+
+      // I should get some kind of award for this hack.
+      await (new Function('__dirname, fs, ROOT, relative, list', `
+        return (async () => {
+          for await (const [file, , depth] of fs.walk(__dirname))
+            list.push([relative(ROOT, file), depth]);
+        })();
+      `))(__dirname, fs, ROOT, relative, list);
+
+      validateWalk(list);
+    });
+
+    it('should do asynchronous traverse', async () => {
+      const list = [];
+
+      await fs.traverse(__dirname, (file, stat, depth) => {
+        list.push([relative(ROOT, file), depth]);
+      });
+
+      validateWalk(list);
     });
 
     it('should do rimraf (2)', async () => {
