@@ -71,12 +71,22 @@ function validateLib() {
   }
 }
 
+function filter(file) {
+  return !file.includes('util.js');
+}
+
 function sortDirent(a, b) {
   return a.name.localeCompare(b.name);
 }
 
 function validateWalk(list) {
   assert.deepStrictEqual(list.sort(sortWalk), WALK_FILES);
+}
+
+function validateWalkFilter(list) {
+  const walkFiles = WALK_FILES.slice();
+  walkFiles.splice(walkFiles.length - 2, 1);
+  assert.deepStrictEqual(list.sort(sortWalk), walkFiles);
 }
 
 function sortWalk([a], [b]) {
@@ -173,6 +183,25 @@ describe('FS', function() {
       });
 
       validateWalk(list);
+    });
+
+    it('should do synchronous walk and filter', () => {
+      const list = [];
+
+      for (const [file, , depth] of fs.walkSync(__dirname, filter))
+        list.push([relative(ROOT, file), depth]);
+
+      validateWalkFilter(list);
+    });
+
+    it('should do synchronous traverse and filter', () => {
+      const list = [];
+
+      fs.traverseSync(__dirname, filter, (file, stat, depth) => {
+        list.push([relative(ROOT, file), depth]);
+      });
+
+      validateWalkFilter(list);
     });
 
     it('should do rimraf (2)', () => {
@@ -277,13 +306,61 @@ describe('FS', function() {
       it('should do asynchronous traverse', async () => {
         const list = [];
 
-        await fs.traverse(__dirname, (file, stat, depth) => {
+        await fs.traverse(__dirname, follow, (file, stat, depth) => {
           list.push([relative(ROOT, file), depth]);
         });
 
         validateWalk(list);
       });
     }
+
+    it('should do asynchronous walk and filter', async () => {
+      const list = [];
+
+      if (!Symbol.asyncIterator) {
+        const iter = fs.walk(__dirname, filter);
+
+        for (;;) {
+          const {value, done} = await iter.next();
+
+          if (done)
+            break;
+
+          const [file, , depth] = value;
+
+          list.push([relative(ROOT, file), depth]);
+        }
+      } else {
+        await (new Function('__dirname, filter, fs, ROOT, relative, list', `
+          return (async () => {
+            for await (const [file, , depth] of fs.walk(__dirname, filter))
+              list.push([relative(ROOT, file), depth]);
+          })();
+        `))(__dirname, filter, fs, ROOT, relative, list);
+      }
+
+      validateWalkFilter(list);
+    });
+
+    it('should do asynchronous traverse without options', async () => {
+      const list = [];
+
+      await fs.traverse(__dirname, (file, stat, depth) => {
+        list.push([relative(ROOT, file), depth]);
+      });
+
+      validateWalk(list);
+    });
+
+    it('should do asynchronous traverse', async () => {
+      const list = [];
+
+      await fs.traverse(__dirname, filter, (file, stat, depth) => {
+        list.push([relative(ROOT, file), depth]);
+      });
+
+      validateWalkFilter(list);
+    });
 
     it('should do rimraf (2)', async () => {
       assert.strictEqual(await fs.rimraf(DATA), 0);
