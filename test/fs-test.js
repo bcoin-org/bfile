@@ -13,15 +13,27 @@ const DATA = resolve(__dirname, 'data');
 const LIB = resolve(DATA, 'lib');
 
 const LIB_FILES = [
+  'backend.js',
   'bfile.js',
+  'compat.js',
+  'error.js',
+  'extra.js',
+  'features.js',
   'fs-browser.js',
-  'fs.js'
+  'fs.js',
+  'legacy.js',
+  'modern.js',
+  'util.js'
 ];
 
 function validateLib() {
   const list = fs.readdirSync(LIB);
 
   assert.deepStrictEqual(list.sort(), LIB_FILES);
+
+  const dirents = fs.readdirSync(LIB, { withFileTypes: true });
+
+  assert.deepStrictEqual(dirents.sort(sortDirent).map(d => d.name), LIB_FILES);
 
   for (const name of LIB_FILES) {
     const file = resolve(LIB, name);
@@ -37,6 +49,32 @@ function validateLib() {
 
     assert(fileData.equals(realData));
   }
+}
+
+function sortDirent(a, b) {
+  return a.name.localeCompare(b.name);
+}
+
+if (!assert.rejects) {
+  // Not pretty, but better than nothing.
+  assert.rejects = async function rejects(func, ...args) {
+    if (!(func instanceof Promise))
+      assert(typeof func === 'function');
+
+    try {
+      if (func instanceof Promise)
+        await func;
+      else
+        await func();
+    } catch (e) {
+      assert.throws(() => {
+        throw e;
+      }, ...args);
+      return;
+    }
+
+    assert.throws(() => {}, ...args);
+  };
 }
 
 describe('FS', function() {
@@ -57,8 +95,11 @@ describe('FS', function() {
 
     it('should do mkdirp', () => {
       fs.mkdirpSync(LIB, 0o755);
+      assert(fs.existsSync(DATA));
+      assert(fs.existsSync(LIB));
       assert(fs.statSync(DATA).isDirectory());
       assert(fs.statSync(LIB).isDirectory());
+      assert(typeof fs.statSync(DATA).birthtimeMs === 'number');
     });
 
     it('should do recursive copy (1)', () => {
@@ -123,8 +164,11 @@ describe('FS', function() {
 
     it('should do mkdirp', async () => {
       await fs.mkdirp(LIB, 0o755);
+      assert(await fs.exists(DATA));
+      assert(await fs.exists(LIB));
       assert((await fs.stat(DATA)).isDirectory());
       assert((await fs.stat(LIB)).isDirectory());
+      assert(typeof (await fs.stat(DATA)).birthtimeMs === 'number');
     });
 
     it('should do recursive copy (1)', async () => {
