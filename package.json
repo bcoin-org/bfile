@@ -26,5 +26,8 @@
   },
   "browser": {
     "./lib/fs": "./lib/fs-browser.js"
+  },
+  "node": {
+    "./lib/walk": false
   }
 }
