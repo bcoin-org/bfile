@@ -25,8 +25,7 @@ const LIB_FILES = [
   'fs.js',
   'legacy.js',
   'modern.js',
-  'util.js',
-  'walk.js'
+  'util.js'
 ];
 
 const WALK_FILES = [
@@ -44,7 +43,6 @@ const WALK_FILES = [
   ['test/data/lib/legacy.js', 3],
   ['test/data/lib/modern.js', 3],
   ['test/data/lib/util.js', 3],
-  ['test/data/lib/walk.js', 3],
   ['test/fs-test.js', 1]
 ];
 
