@@ -1,5 +1,6 @@
 /* eslint-env mocha */
 /* eslint prefer-arrow-callback: "off" */
+/* global BigInt */
 
 'use strict';
 
@@ -307,86 +308,99 @@ describe('FS', function() {
 
     let handle = null;
 
-    it('should create directory', async () => {
-      await promises.mkdir(DATA, 0o755);
-    });
+    for (let i = 0; i < 2; i++) {
+      it('should create directory', async () => {
+        await promises.mkdir(DATA, 0o755);
+      });
 
-    it('should open file', async () => {
-      handle = await promises.open(resolve(DATA, 'handle'), 'a+');
-      assert(handle && typeof handle === 'object');
-    });
+      it('should open file', async () => {
+        if (i === 0)
+          handle = await promises.open(resolve(DATA, 'handle'), 'a+');
+        else
+          handle = await fs.handle(resolve(DATA, 'handle'), 'a+');
 
-    it('should write to file (1)', async () => {
-      assert(handle);
-      const result = await handle.write('foobar\n');
-      assert(result);
-      assert(typeof result.bytesWritten === 'number');
-      assert(typeof result.buffer === 'string');
-      assert.strictEqual(result.bytesWritten, 7);
-    });
+        assert(handle && typeof handle === 'object');
+      });
 
-    it('should stat file (1)', async () => {
-      assert(handle);
-      const stat = await handle.stat();
-      assert(stat);
-      assert.strictEqual(stat.size, 7);
-    });
+      it('should write to file (1)', async () => {
+        assert(handle);
+        const result = await handle.write('foobar\n');
+        assert(result);
+        assert(typeof result.bytesWritten === 'number');
+        assert(typeof result.buffer === 'string');
+        assert.strictEqual(result.bytesWritten, 7);
+      });
 
-    it('should read from file (1)', async () => {
-      assert(handle);
-      const buf = Buffer.alloc(7);
-      const result = await handle.read(buf, 0, 7, 0);
-      assert(result);
-      assert(typeof result.bytesRead === 'number');
-      assert(Buffer.isBuffer(result.buffer));
-      assert.strictEqual(result.bytesRead, 7);
-      assert.strictEqual(buf.toString('binary'), 'foobar\n');
-    });
+      it('should stat file (1)', async () => {
+        assert(handle);
+        const stat = await handle.stat();
+        assert(stat);
+        assert.strictEqual(stat.size, 7);
+      });
 
-    it('should truncate file', async () => {
-      assert(handle);
-      await handle.truncate(0);
-      const stat = await handle.stat();
-      assert(stat);
-      assert.strictEqual(stat.size, 0);
-    });
+      it('should read from file (1)', async () => {
+        assert(handle);
+        const buf = Buffer.alloc(7);
+        const result = await handle.read(buf, 0, 7, 0);
+        assert(result);
+        assert(typeof result.bytesRead === 'number');
+        assert(Buffer.isBuffer(result.buffer));
+        assert.strictEqual(result.bytesRead, 7);
+        assert.strictEqual(buf.toString('binary'), 'foobar\n');
+      });
 
-    it('should write to file (2)', async () => {
-      assert(handle);
-      const buf = Buffer.from('foobaz\n');
-      const result = await handle.write(buf, 0, 7, 0);
-      assert(result);
-      assert(typeof result.bytesWritten === 'number');
-      assert(Buffer.isBuffer(result.buffer));
-      assert.strictEqual(result.bytesWritten, 7);
-    });
+      it('should truncate file', async () => {
+        assert(handle);
+        await handle.truncate(0);
+        const stat = await handle.stat();
+        assert(stat);
+        assert.strictEqual(stat.size, 0);
+      });
 
-    it('should stat file (2)', async () => {
-      assert(handle);
-      const stat = await handle.stat();
-      assert(stat);
-      assert.strictEqual(stat.size, 7);
-    });
+      it('should write to file (2)', async () => {
+        assert(handle);
+        const buf = Buffer.from('foobaz\n');
+        const result = await handle.write(buf, 0, 7, 0);
+        assert(result);
+        assert(typeof result.bytesWritten === 'number');
+        assert(Buffer.isBuffer(result.buffer));
+        assert.strictEqual(result.bytesWritten, 7);
+      });
 
-    it('should read from file (2)', async () => {
-      assert(handle);
-      const buf = Buffer.alloc(7);
-      const result = await handle.read(buf, 0, 7, 0);
-      assert(result);
-      assert(typeof result.bytesRead === 'number');
-      assert(Buffer.isBuffer(result.buffer));
-      assert.strictEqual(result.bytesRead, 7);
-      assert.strictEqual(buf.toString('binary'), 'foobaz\n');
-    });
+      it('should stat file (2)', async () => {
+        assert(handle);
 
-    it('should close file', async () => {
-      await handle.close();
-    });
+        const stat = await handle.stat();
 
-    it('should do rimraf', async () => {
-      assert.strictEqual(await fs.rimraf(DATA), 0);
-      assert(!await fs.exists(DATA));
-      assert(!await fs.exists(LIB));
-    });
+        assert(stat);
+        assert.strictEqual(stat.size, 7);
+
+        if (typeof BigInt === 'function') {
+          const bigstat = await handle.stat({ bigint: true });
+          assert.strictEqual(bigstat.size, BigInt(7));
+        }
+      });
+
+      it('should read from file (2)', async () => {
+        assert(handle);
+        const buf = Buffer.alloc(7);
+        const result = await handle.read(buf, 0, 7, 0);
+        assert(result);
+        assert(typeof result.bytesRead === 'number');
+        assert(Buffer.isBuffer(result.buffer));
+        assert.strictEqual(result.bytesRead, 7);
+        assert.strictEqual(buf.toString('binary'), 'foobaz\n');
+      });
+
+      it('should close file', async () => {
+        await handle.close();
+      });
+
+      it('should do rimraf', async () => {
+        assert.strictEqual(await fs.rimraf(DATA), 0);
+        assert(!await fs.exists(DATA));
+        assert(!await fs.exists(LIB));
+      });
+    }
   });
 });
