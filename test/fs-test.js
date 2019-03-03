@@ -144,16 +144,28 @@ describe('FS', function() {
       }, /EEXIST/);
     });
 
-    it('should do synchronous walk', () => {
-      const list = [];
+    for (const follow of [false, true]) {
+      it('should do synchronous walk', () => {
+        const list = [];
 
-      for (const [file, , depth] of fs.walkSync(__dirname))
-        list.push([relative(ROOT, file), depth]);
+        for (const [file, , depth] of fs.walkSync(__dirname, follow))
+          list.push([relative(ROOT, file), depth]);
 
-      validateWalk(list);
-    });
+        validateWalk(list);
+      });
 
-    it('should do synchronous traverse', () => {
+      it('should do synchronous traverse', () => {
+        const list = [];
+
+        fs.traverseSync(__dirname, follow, (file, stat, depth) => {
+          list.push([relative(ROOT, file), depth]);
+        });
+
+        validateWalk(list);
+      });
+    }
+
+    it('should do synchronous traverse without options', () => {
       const list = [];
 
       fs.traverseSync(__dirname, (file, stat, depth) => {
@@ -232,32 +244,46 @@ describe('FS', function() {
       }, /EEXIST/);
     });
 
-    it('should do asynchronous walk', async (ctx) => {
-      if (!fs.walk)
-        ctx.skip();
+    for (const follow of [false, true]) {
+      it('should do asynchronous walk', async () => {
+        const list = [];
 
-      const list = [];
+        if (!Symbol.asyncIterator) {
+          const iter = fs.walk(__dirname, follow);
 
-      // I should get some kind of award for this hack.
-      await (new Function('__dirname, fs, ROOT, relative, list', `
-        return (async () => {
-          for await (const [file, , depth] of fs.walk(__dirname))
+          for (;;) {
+            const {value, done} = await iter.next();
+
+            if (done)
+              break;
+
+            const [file, , depth] = value;
+
             list.push([relative(ROOT, file), depth]);
-        })();
-      `))(__dirname, fs, ROOT, relative, list);
+          }
+        } else {
+          // I should get some kind of award for this hack.
+          await (new Function('__dirname, follow, fs, ROOT, relative, list', `
+            return (async () => {
+              for await (const [file, , depth] of fs.walk(__dirname, follow))
+                list.push([relative(ROOT, file), depth]);
+            })();
+          `))(__dirname, follow, fs, ROOT, relative, list);
+        }
 
-      validateWalk(list);
-    });
-
-    it('should do asynchronous traverse', async () => {
-      const list = [];
-
-      await fs.traverse(__dirname, (file, stat, depth) => {
-        list.push([relative(ROOT, file), depth]);
+        validateWalk(list);
       });
 
-      validateWalk(list);
-    });
+      it('should do asynchronous traverse', async () => {
+        const list = [];
+
+        await fs.traverse(__dirname, (file, stat, depth) => {
+          list.push([relative(ROOT, file), depth]);
+        });
+
+        validateWalk(list);
+      });
+    }
 
     it('should do rimraf (2)', async () => {
       assert.strictEqual(await fs.rimraf(DATA), 0);
