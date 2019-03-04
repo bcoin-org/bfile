@@ -100,6 +100,21 @@ with properties:
 - `maxDepth` - Maximum depth to traverse. For reference, `paths` are depth `0`.
   Set to `-1` for no limit (default: `-1`).
 
+#### Detecting broken symlinks with `fs.stats` and `fs.{traverse,walk}`
+
+`fs.stats` and the walking functions allow you to detect broken symlinks easily
+when the `follow` option is on:
+
+``` js
+const stat = await fs.statsTry('./foobar', { follow: true });
+
+if (!stat) // ENOENT or EACCES
+  throw new Error('File not found.');
+
+if (stat.isSymbolicLink()) // A symlink we couldn't resolve
+  throw new Error('Broken symlink detected.');
+```
+
 ### Options
 
 ## Contribution and License Agreement
