@@ -38,7 +38,8 @@ In addition to the default FS API, bfile provides some extra helpers.
   Optionally accepts a filter callback.
 - `fs.copySync(src, dest, [filter(path, stat)])` - Synchronous `fs.copy`.
 - `fs.exists(path, [mode])` (async) - A fixed version of `fs.exists`. Basically
-  a wrapper around `fs.access` which returns true or false.
+  a wrapper around `fs.access` which returns false on `ENOENT` or `EACCESS`.
+  Accepts `fs.access` flags as the second argument.
 - `fs.existsSync(path, [mode])` - Synchronous `fs.exists`.
 - `fs.lstatTry(path, [options])` (async) - A version of `fs.lstat` which
   returns `null` on `ENOENT` or `EACCES`.
