@@ -90,9 +90,9 @@ with properties:
   struct (default: `false`).
 - `filesOnly` - A boolean indicating whether to return directories in the
   iterated results (default: `false`).
-- `filter(path, stat, depth)` - A callback to filter determine directories are
-  entered and which files are returned. Note that `stat` may be `null`
-  (default: `null`).
+- `filter(path, stat, depth)` - A callback to filter determine which
+  directories are entered and which files are returned. Note that `stat` may be
+  `null` (default: `null`).
 - `follow` - A boolean indicating whether to follow symlinks. Note that the
   walking functions are smart enough to avoid recursive symlink loops (default:
   `false`).
