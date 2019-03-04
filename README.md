@@ -34,8 +34,8 @@ In addition to the default FS API, bfile provides some extra helpers.
 
 #### Methods
 
-- `fs.copy(src, dest, [filter(path, stat)])` (async) - Recursive copy.
-  Optionally accepts a filter callback.
+- `fs.copy(src, [options])` (async) - Recursively copy file or directory to
+  `dest`.
 - `fs.copySync(src, dest, [filter(path, stat)])` - Synchronous `fs.copy`.
 - `fs.exists(path, [mode])` (async) - A fixed version of `fs.exists`. Basically
   a wrapper around `fs.access` which returns false on `ENOENT` or `EACCESS`.
@@ -44,12 +44,17 @@ In addition to the default FS API, bfile provides some extra helpers.
 - `fs.lstatTry(path, [options])` (async) - A version of `fs.lstat` which
   returns `null` on `ENOENT` or `EACCES`.
 - `fs.lstatTrySync(path, [options])` - Synchronous `fs.lstatTry`.
+- `fs.move(src, dest)` (async) - Try to rename file. Recursively copies across
+  devices, deleting the original, if necessary.
+- `fs.moveSync(path, [mode])` - Synchronous `fs.move`.
 - `fs.mkdirp(path, [mode])` (async) - Alias to
   `fs.mkdir(path, { recursive: true })`.
 - `fs.mkdirpSync(path, [mode])` - Synchronous `fs.mkdirp`.
-- `fs.rimraf(path, [filter(path, stat)])` (async) - Recursive removal.
-  Optionally accepts a filter callback.
-- `fs.rimrafSync(path, [filter(path, stat)])` - Synchronous `fs.rimraf`.
+- `fs.readJSON(path, [options])` (async) - Read a JSON file. Returns parsed
+  JSON.
+- `fs.readJSONSync(path, [options])` - Synchronous `fs.readJSON`.
+- `fs.remove(path, [options])` (async) - Recursively remove `path`.
+- `fs.removeSync(path, [options])` - Synchronous `fs.rimraf`.
 - `fs.statTry(path, [options])` (async) - A version of `fs.stat` which returns
   `null` on `ENOENT` or `EACCES`.
 - `fs.statTrySync(path, [options])` - Synchronous `fs.statTry`.
@@ -68,37 +73,84 @@ In addition to the default FS API, bfile provides some extra helpers.
 - `fs.walk(paths, [options])` - An async iterator which recursively walks the
   target path/paths.  Returns entries in the form of `[path, stat, depth]`.
   Note that `stat` may be `null` in the event of an `EACCES`, `EPERM`, or
-  `ELOOP`.
+  `ELOOP` if `options.throws` is false.
 - `fs.walkSync(paths, [options])` - Synchronous `fs.walk`.
+- `fs.writeJSON(path, json, [options])` (async) - Write a JSON file
+  (stringifies `json`).
+- `fs.writeJSONSync(path, json, [options])` - Synchronous `fs.writeJSON`.
 
 #### Options
+
+##### `fs.copy` options
+
+- `flags` (number) - A bitfield to be passed to `fs.copyFile{,Sync}` as flags.
+- `filter(path, stat, depth)` (function) - A callback to filter determine which
+  files are copied.
+- `follow` (boolean) - Whether to follow symlinks for `src`.
+- `overwrite` (boolean) - Whether to overwrite existing files at the
+  destination (default: `false`).
+- `timestamps` (boolean) - Whether to preserve file timestamps (default:
+  `false`).
+
+##### `fs.readJSON` options
+
+Options are the standard `fs.readFile` options with some extras:
+
+- `reviver(key, value)` (function) - Reviver function for JSON parsing
+  (default: `null`).
+
+Options may also be a function as an alias for the `reviver` option.
+
+##### `fs.remove` options
+
+- `filter(path, stat, depth)` (function) - A callback to filter determine which
+  files are removed.
+
+Options may also be a function as an alias for the `filter` option.
 
 ##### `fs.stats` options
 
 `fs.stats` and `fs.statsSync` accept an object with properties:
 
-- `follow` - A boolean indicating whether to attempt calling `fs.stat` before
-  `fs.lstat`. If false, behavior is identical to `fs.lstat` (default: `false`).
-- `bigint` - A boolean indiciating whether to use `BigInt`s on the `fs.Stats`
-  struct (default: `false`).
+- `follow` (boolean) - Whether to attempt calling `fs.stat` before
+  `fs.lstat`. If false, behavior is identical to `fs.lstat` (default: `true`).
+- `bigint` (boolean) - Whether to use `BigInt`s on the `fs.Stats` struct
+  (default: `false`).
+
+Options may also be a boolean as an alias for the `follow` option.
 
 ##### `fs.{traverse,walk}` options
 
 `fs.traverse`, `fs.traverseSync`, `fs.walk`, and `fs.walkSync` accept an object
 with properties:
 
-- `bigint` - A boolean indiciating whether to use `BigInt`s on the `fs.Stats`
-  struct (default: `false`).
-- `filesOnly` - A boolean indicating whether to return directories in the
-  iterated results (default: `false`).
-- `filter(path, stat, depth)` - A callback to filter determine which
+- `bigint` (boolean) - Whether to use `BigInt`s on the `fs.Stats` struct
+  (default: `false`).
+- `dirs` (boolean) - Whether to return directories in the iterated results
+  (default: `false`).
+- `files` (boolean) - Whether to return non-directory files in the iterated
+  results (default: `false`).
+- `filter(path, stat, depth)` (function) - A callback to filter determine which
   directories are entered and which files are returned. Note that `stat` may be
-  `null` (default: `null`).
-- `follow` - A boolean indicating whether to follow symlinks. Note that the
-  walking functions are smart enough to avoid recursive symlink loops (default:
-  `false`).
-- `maxDepth` - Maximum depth to traverse. For reference, `paths` are depth `0`.
-  Set to `-1` for no limit (default: `-1`).
+  `null` if `options.throws` is false (default: `null`).
+- `follow` (boolean) - Whether to follow symlinks. Note that the walking
+  functions are smart enough to avoid recursive symlink loops (default:
+  `true`).
+- `maxDepth` (number) - Maximum depth to traverse. For reference, `paths` are
+  depth `0`.  Set to `-1` for no limit (default: `-1`).
+- `throws` (boolean) - Whether to throw on stat failure (default: `false`).
+
+##### `fs.writeJSON` options
+
+Options are the standard `fs.writeFile` options with some extras:
+
+- `replacer(key, value)` (function) - Replacer function for JSON
+  stringification (default: `null`).
+- `spaces` (number) - Number of spaces to indent by (default: `2`).
+- `eol` (string) - Line ending to use for the output text (default: `\n`).
+
+Options may also be a function as an alias for the `reviver` option, or a
+number for the `spaces` option.
 
 #### Detecting broken symlinks with `fs.stats` and `fs.{traverse,walk}`
 
@@ -106,7 +158,7 @@ with properties:
 when the `follow` option is on:
 
 ``` js
-const stat = await fs.statsTry('./foobar', { follow: true });
+const stat = await fs.statsTry('./foobar');
 
 if (!stat) // ENOENT or EACCES
   throw new Error('File not found.');

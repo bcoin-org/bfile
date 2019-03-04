@@ -579,4 +579,45 @@ describe('FS', function() {
       });
     }
   });
+
+  describe('Extra', function() {
+    const FOO = resolve(__dirname, 'foo.json');
+    const BAR = resolve(__dirname, 'bar.json');
+
+    it('should do writeJSON (sync)', () => {
+      fs.removeSync(FOO);
+      assert(!fs.existsSync(FOO));
+      fs.writeJSONSync(FOO, { foobar: 1 });
+    });
+
+    it('should do move (sync)', () => {
+      fs.moveSync(FOO, BAR);
+      assert(!fs.existsSync(FOO));
+      assert(fs.existsSync(BAR));
+    });
+
+    it('should do readJSON (sync)', () => {
+      const json = fs.readJSONSync(BAR);
+      assert(json && json.foobar === 1);
+      fs.unlinkSync(BAR);
+    });
+
+    it('should do writeJSON (async)', async () => {
+      await fs.remove(FOO);
+      assert(!await fs.exists(FOO));
+      await fs.writeJSON(FOO, { foobar: 1 });
+    });
+
+    it('should do move (async)', async () => {
+      await fs.move(FOO, BAR);
+      assert(!await fs.exists(FOO));
+      assert(await fs.exists(BAR));
+    });
+
+    it('should do readJSON (async)', async () => {
+      const json = await fs.readJSON(BAR);
+      assert(json && json.foobar === 1);
+      await fs.unlink(BAR);
+    });
+  });
 });
