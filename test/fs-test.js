@@ -12,6 +12,7 @@ const {COPYFILE_EXCL} = fs.constants;
 const ROOT = resolve(__dirname, '..');
 const REAL_LIB = resolve(__dirname, '..', 'lib');
 const DATA = resolve(__dirname, 'data');
+const OUT = resolve(__dirname, 'data', 'out.txt');
 const LIB = resolve(DATA, 'lib');
 
 const LIB_FILES = [
@@ -618,6 +619,24 @@ describe('FS', function() {
       const json = await fs.readJSON(BAR);
       assert(json && json.foobar === 1);
       await fs.unlink(BAR);
+    });
+
+    it('should do outputFile (sync)', () => {
+      assert(!fs.existsSync(DATA));
+      fs.outputFileSync(OUT, 'out');
+      assert(fs.readFileSync(OUT, 'utf8') === 'out');
+      fs.removeSync(DATA);
+      assert(!fs.existsSync(OUT));
+      assert(!fs.existsSync(DATA));
+    });
+
+    it('should do outputFile (async)', async () => {
+      assert(!await fs.exists(DATA));
+      await fs.outputFile(OUT, 'out');
+      assert((await fs.readFile(OUT, 'utf8')) === 'out');
+      await fs.remove(DATA);
+      assert(!await fs.exists(OUT));
+      assert(!await fs.exists(DATA));
     });
   });
 });

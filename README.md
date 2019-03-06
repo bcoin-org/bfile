@@ -47,6 +47,10 @@ In addition to the default FS API, bfile provides some extra helpers.
 - `fs.move(src, dest)` (async) - Try to rename file. Recursively copies across
   devices, deleting the original, if necessary.
 - `fs.moveSync(path, [mode])` - Synchronous `fs.move`.
+- `fs.outputFile(path, data, [options])` (async) - Output file while ensuring
+  the preceding directory structure exists. Basically a `mkdirp` wrapper around
+  `writeFile()`.
+- `fs.outputFileSync(path, data, [options])` - Synchronous `fs.outputFile`.
 - `fs.mkdirp(path, [mode])` (async) - Alias to
   `fs.mkdir(path, { recursive: true })`.
 - `fs.mkdirpSync(path, [mode])` - Synchronous `fs.mkdirp`.
@@ -83,10 +87,11 @@ In addition to the default FS API, bfile provides some extra helpers.
 
 ##### `fs.copy` options
 
-- `flags` (number) - A bitfield to be passed to `fs.copyFile{,Sync}` as flags.
+- `flags` (number) - A bitfield to be passed to `fs.copyFile{,Sync}` as flags
+  (default: `0`).
 - `filter(path, stat, depth)` (function) - A callback to filter determine which
-  files are copied.
-- `follow` (boolean) - Whether to follow symlinks for `src`.
+  files are copied (default: `null`).
+- `follow` (boolean) - Whether to follow symlinks for `src` (default: `false`).
 - `overwrite` (boolean) - Whether to overwrite existing files at the
   destination (default: `false`).
 - `timestamps` (boolean) - Whether to preserve file timestamps (default:
@@ -104,7 +109,7 @@ Options may also be a function as an alias for the `reviver` option.
 ##### `fs.remove` options
 
 - `filter(path, stat, depth)` (function) - A callback to filter determine which
-  files are removed.
+  files are removed (default: `null`).
 
 Options may also be a function as an alias for the `filter` option.
 
