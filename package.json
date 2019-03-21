@@ -19,7 +19,7 @@
     "test": "bmocha -e BFILE_FORCE_COMPAT=1 && bmocha && bmocha -e BFILE_FORCE_STABLE=1"
   },
   "devDependencies": {
-    "bmocha": "^1.0.0"
+    "bmocha": "^2.1.0"
   },
   "engines": {
     "node": ">=8.0.0"
