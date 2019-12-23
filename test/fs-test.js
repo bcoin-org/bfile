@@ -711,20 +711,22 @@ describe('FS', function() {
       assert.deepStrictEqual(list.sort(), LIB_FILES);
     });
 
-    it.skip('should do rmdir (sync)', () => {
+    it('should do rmdir (sync)', () => {
       assert(!fs.existsSync(DATA));
       assert.strictEqual(fs.copySync(REAL_LIB, DATA), 0);
       assert(fs.existsSync(DATA));
+      assert(fs.readdirSync(DATA).length > 0);
 
       fs.rmdirSync(DATA, { recursive: true });
 
       assert(!fs.existsSync(DATA));
     });
 
-    it.skip('should do rmdir (async)', async () => {
+    it('should do rmdir (async)', async () => {
       assert(!await fs.exists(DATA));
       assert.strictEqual(await fs.copy(REAL_LIB, DATA), 0);
       assert(await fs.exists(DATA));
+      assert((await fs.readdir(DATA)).length > 0);
 
       await fs.rmdir(DATA, { recursive: true });
 
