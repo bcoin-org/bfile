@@ -1,5 +1,6 @@
 /* eslint-env mocha */
 /* eslint prefer-arrow-callback: "off" */
+/* eslint valid-typeof: "off" */
 /* global BigInt */
 
 'use strict';
@@ -637,6 +638,218 @@ describe('FS', function() {
       await fs.remove(DATA);
       assert(!await fs.exists(OUT));
       assert(!await fs.exists(DATA));
+    });
+  });
+
+  describe('New Features', function() {
+    it('should do opendir (sync)', () => {
+      const dir = fs.opendirSync(REAL_LIB);
+      const list = [];
+
+      assert.strictEqual(dir.path, REAL_LIB);
+
+      for (;;) {
+        const item = dir.readSync();
+
+        if (item === null)
+          break;
+
+        list.push(item.name);
+      }
+
+      dir.closeSync();
+
+      assert.throws(() => dir.readSync());
+      assert.throws(() => dir.closeSync());
+
+      assert.deepStrictEqual(list.sort(), LIB_FILES);
+    });
+
+    it('should do opendir (async)', async () => {
+      const dir = await fs.opendir(REAL_LIB);
+      const list = [];
+
+      assert.strictEqual(dir.path, REAL_LIB);
+
+      for (;;) {
+        const item = await dir.read();
+
+        if (item === null)
+          break;
+
+        list.push(item.name);
+      }
+
+      await dir.close();
+
+      assert.rejects(async () => dir.read());
+      assert.rejects(async () => dir.close());
+
+      assert.deepStrictEqual(list.sort(), LIB_FILES);
+    });
+
+    it('should do opendir (iterator)', async () => {
+      const dir = await fs.opendir(REAL_LIB);
+      const iter = dir[Symbol.asyncIterator || 'asyncIterator']();
+      const list = [];
+
+      assert.strictEqual(dir.path, REAL_LIB);
+
+      for (;;) {
+        const {value, done} = await iter.next();
+
+        if (done)
+          break;
+
+        list.push(value.name);
+      }
+
+      assert.rejects(async () => dir.close());
+      assert.rejects(async () => dir.read());
+      assert.rejects(async () => dir.close());
+
+      assert.deepStrictEqual(list.sort(), LIB_FILES);
+    });
+
+    it.skip('should do rmdir (sync)', () => {
+      assert(!fs.existsSync(DATA));
+      assert.strictEqual(fs.copySync(REAL_LIB, DATA), 0);
+      assert(fs.existsSync(DATA));
+
+      fs.rmdirSync(DATA, { recursive: true });
+
+      assert(!fs.existsSync(DATA));
+    });
+
+    it.skip('should do rmdir (async)', async () => {
+      assert(!await fs.exists(DATA));
+      assert.strictEqual(await fs.copy(REAL_LIB, DATA), 0);
+      assert(await fs.exists(DATA));
+
+      await fs.rmdir(DATA, { recursive: true });
+
+      assert(!await fs.exists(DATA));
+    });
+
+    it('should do writev (sync)', () => {
+      fs.mkdirSync(DATA);
+
+      const fd = fs.openSync(OUT, 'a+');
+      const bytes = fs.writevSync(fd, [Buffer.from('foo'), Buffer.from('bar')]);
+
+      fs.closeSync(fd);
+
+      assert.strictEqual(bytes, 6);
+      assert.strictEqual(fs.readFileSync(OUT, 'utf8'), 'foobar');
+
+      fs.unlinkSync(OUT);
+      fs.rmdirSync(DATA);
+    });
+
+    it('should do writev (async)', async () => {
+      await fs.mkdir(DATA);
+
+      const fd = await fs.open(OUT, 'a+');
+      const bytes = await fs.writev(fd, [Buffer.from('foo'),
+                                         Buffer.from('bar')]);
+
+      await fs.close(fd);
+
+      assert.strictEqual(bytes, 6);
+      assert.strictEqual(await fs.readFile(OUT, 'utf8'), 'foobar');
+
+      await fs.unlink(OUT);
+      await fs.rmdir(DATA);
+    });
+
+    it('should do writev (promises)', async () => {
+      await fs.mkdir(DATA);
+
+      const handle = await fs.promises.open(OUT, 'a+');
+      const result = await handle.writev([Buffer.from('foo'),
+                                          Buffer.from('bar')]);
+
+      await handle.close();
+
+      assert.deepStrictEqual(result, {
+        buffers: [Buffer.from('foo'), Buffer.from('bar')],
+        bytesWritten: 6
+      });
+
+      assert.strictEqual(await fs.readFile(OUT, 'utf8'), 'foobar');
+
+      await fs.unlink(OUT);
+      await fs.rmdir(DATA);
+    });
+
+    it('should do stat (sync)', () => {
+      const stat = fs.statSync(__filename);
+
+      assert(typeof stat.birthtimeMs === 'number');
+    });
+
+    it('should do stat (async)', async () => {
+      const stat = await fs.stat(__filename);
+
+      assert(typeof stat.birthtimeMs === 'number');
+    });
+
+    it('should do stat (promises 1)', async () => {
+      const stat = await fs.promises.stat(__filename);
+
+      assert(typeof stat.birthtimeMs === 'number');
+    });
+
+    it('should do stat (promises 2)', async () => {
+      const handle = await fs.promises.open(__filename);
+      const stat = await handle.stat();
+
+      await handle.close();
+
+      assert(typeof stat.birthtimeMs === 'number');
+    });
+
+    it('should do bigint stat (sync)', () => {
+      if (typeof BigInt !== 'function')
+        this.skip();
+
+      const stat = fs.statSync(__filename, { bigint: true });
+
+      assert(typeof stat.birthtimeMs === 'bigint');
+      assert(typeof stat.birthtimeNs === 'bigint');
+    });
+
+    it('should do bigint stat (async)', async () => {
+      if (typeof BigInt !== 'function')
+        this.skip();
+
+      const stat = await fs.stat(__filename, { bigint: true });
+
+      assert(typeof stat.birthtimeMs === 'bigint');
+      assert(typeof stat.birthtimeNs === 'bigint');
+    });
+
+    it('should do bigint stat (promises 1)', async () => {
+      if (typeof BigInt !== 'function')
+        this.skip();
+
+      const stat = await fs.promises.stat(__filename, { bigint: true });
+
+      assert(typeof stat.birthtimeMs === 'bigint');
+      assert(typeof stat.birthtimeNs === 'bigint');
+    });
+
+    it('should do bigint stat (promises 2)', async () => {
+      if (typeof BigInt !== 'function')
+        this.skip();
+
+      const handle = await fs.promises.open(__filename);
+      const stat = await handle.stat({ bigint: true });
+
+      await handle.close();
+
+      assert(typeof stat.birthtimeMs === 'bigint');
+      assert(typeof stat.birthtimeNs === 'bigint');
     });
   });
 });

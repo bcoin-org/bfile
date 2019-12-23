@@ -172,8 +172,6 @@ if (stat.isSymbolicLink()) // A symlink we couldn't resolve
   throw new Error('Broken symlink detected.');
 ```
 
-### Options
-
 ## Contribution and License Agreement
 
 If you contribute code to this project, you are implicitly allowing your code
