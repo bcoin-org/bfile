@@ -639,6 +639,22 @@ describe('FS', function() {
       assert(!await fs.exists(OUT));
       assert(!await fs.exists(DATA));
     });
+
+    it('should empty directory (sync)', () => {
+      fs.copySync(REAL_LIB, DATA);
+      assert(fs.readdirSync(DATA).length > 0);
+      fs.emptySync(DATA);
+      assert(fs.readdirSync(DATA).length === 0);
+      fs.rmdirSync(DATA);
+    });
+
+    it('should empty directory (async)', async () => {
+      await fs.copy(REAL_LIB, DATA);
+      assert((await fs.readdir(DATA)).length > 0);
+      await fs.empty(DATA);
+      assert((await fs.readdir(DATA)).length === 0);
+      await fs.rmdir(DATA);
+    });
   });
 
   describe('New Features', function() {
