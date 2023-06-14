@@ -29,26 +29,21 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        include:
-          - name: Default
-            script: test-default
-          - name: Compat
-            script: test-compat
-          - name: Stable
-            script: test-stable
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        node: [16.x, 18.x, 20.x]
 
     steps:
     - uses: actions/checkout@v3
 
-    - name: Setup
+    - name: Setup Node.js
       uses: actions/setup-node@v3
       with:
-        node-version: 20.x
+        node-version: ${{ matrix.node }}
 
     - name: Install dependencies
       run: npm install
 
-    - name: Test ${{ matrix.name }}
-      run: npm run ${{ matrix.script }}
+    - name: Test
+      run: npm run test
 
 
