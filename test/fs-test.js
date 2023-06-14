@@ -5,7 +5,7 @@
 
 'use strict';
 
-const assert = require('assert');
+const assert = require('bsert');
 const {relative, resolve} = require('path');
 const fs = require('../');
 const {COPYFILE_EXCL} = fs.constants;
@@ -17,15 +17,11 @@ const OUT = resolve(__dirname, 'data', 'out.txt');
 const LIB = resolve(DATA, 'lib');
 
 const LIB_FILES = [
-  'backend.js',
   'bfile.js',
-  'compat.js',
   'error.js',
   'extra.js',
-  'features.js',
   'fs-browser.js',
   'fs.js',
-  'legacy.js',
   'modern.js',
   'util.js'
 ];
@@ -34,15 +30,11 @@ const WALK_FILES = [
   ['test', 0],
   ['test/data', 1],
   ['test/data/lib', 2],
-  ['test/data/lib/backend.js', 3],
   ['test/data/lib/bfile.js', 3],
-  ['test/data/lib/compat.js', 3],
   ['test/data/lib/error.js', 3],
   ['test/data/lib/extra.js', 3],
-  ['test/data/lib/features.js', 3],
   ['test/data/lib/fs-browser.js', 3],
   ['test/data/lib/fs.js', 3],
-  ['test/data/lib/legacy.js', 3],
   ['test/data/lib/modern.js', 3],
   ['test/data/lib/util.js', 3],
   ['test/fs-test.js', 1]
@@ -727,24 +719,24 @@ describe('FS', function() {
       assert.deepStrictEqual(list.sort(), LIB_FILES);
     });
 
-    it('should do rmdir (sync)', () => {
+    it('should do rm recursive (sync)', () => {
       assert(!fs.existsSync(DATA));
       assert.strictEqual(fs.copySync(REAL_LIB, DATA), 0);
       assert(fs.existsSync(DATA));
       assert(fs.readdirSync(DATA).length > 0);
 
-      fs.rmdirSync(DATA, { recursive: true });
+      fs.rmSync(DATA, { recursive: true });
 
       assert(!fs.existsSync(DATA));
     });
 
-    it('should do rmdir (async)', async () => {
+    it('should do rm recursive (async)', async () => {
       assert(!await fs.exists(DATA));
       assert.strictEqual(await fs.copy(REAL_LIB, DATA), 0);
       assert(await fs.exists(DATA));
       assert((await fs.readdir(DATA)).length > 0);
 
-      await fs.rmdir(DATA, { recursive: true });
+      await fs.rm(DATA, { recursive: true });
 
       assert(!await fs.exists(DATA));
     });
@@ -789,10 +781,8 @@ describe('FS', function() {
 
       await handle.close();
 
-      assert.deepStrictEqual(result, {
-        buffers: [Buffer.from('foo'), Buffer.from('bar')],
-        bytesWritten: 6
-      });
+      assert.deepStrictEqual(result.buffers, [Buffer.from('foo'), Buffer.from('bar')]);
+      assert.strictEqual(result.bytesWritten, 6);
 
       assert.strictEqual(await fs.readFile(OUT, 'utf8'), 'foobar');
 
