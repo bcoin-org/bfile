@@ -1,0 +1,54 @@
+name: Build
+
+on: [push, pull_request]
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Setup
+      uses: actions/setup-node@v3
+      with:
+        node-version: 20.x
+
+    - name: Install tools
+      run: npm install --location=global bslint
+
+    - name: Install dependencies
+      run: npm install
+
+    - name: Lint
+      run: npm run lint
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - name: Default
+            script: test-default
+          - name: Compat
+            script: test-compat
+          - name: Stable
+            script: test-stable
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Setup
+      uses: actions/setup-node@v3
+      with:
+        node-version: 20.x
+
+    - name: Install dependencies
+      run: npm install
+
+    - name: Test ${{ matrix.name }}
+      run: npm run ${{ matrix.script }}
+
+
