@@ -733,6 +733,7 @@ describe('FS', function() {
       assert(fs.existsSync(DATA));
       assert(fs.readdirSync(DATA).length > 0);
 
+      // TODO: Remove recursive from here and instead use remove/rm.
       fs.rmdirSync(DATA, { recursive: true });
 
       assert(!fs.existsSync(DATA));
@@ -744,6 +745,7 @@ describe('FS', function() {
       assert(await fs.exists(DATA));
       assert((await fs.readdir(DATA)).length > 0);
 
+      // TODO: Remove recursive from here and instead use remove/rm.
       await fs.rmdir(DATA, { recursive: true });
 
       assert(!await fs.exists(DATA));
@@ -789,11 +791,9 @@ describe('FS', function() {
 
       await handle.close();
 
-      assert.deepStrictEqual(result, {
-        buffers: [Buffer.from('foo'), Buffer.from('bar')],
-        bytesWritten: 6
-      });
-
+      // Promises now return Object with NULL prototype.
+      assert.deepStrictEqual(result.buffers, [Buffer.from('foo'), Buffer.from('bar')]);
+      assert.strictEqual(result.bytesWritten, 6);
       assert.strictEqual(await fs.readFile(OUT, 'utf8'), 'foobar');
 
       await fs.unlink(OUT);
