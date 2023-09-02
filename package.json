@@ -16,13 +16,15 @@
   "main": "./lib/bfile.js",
   "scripts": {
     "lint": "eslint lib/ test/",
+    "lint-types": "tsc -p .",
     "test": "npm run test-default && npm run test-compat && npm run test-stable",
     "test-default": "bmocha ./test/*-test.js",
     "test-compat": "bmocha -e BFILE_FORCE_COMPAT=1 ./test/*-test.js",
     "test-stable": "bmocha -e BFILE_FORCE_STABLE=1 ./test/*-test.js"
   },
   "devDependencies": {
-    "bmocha": "^2.1.8"
+    "bmocha": "^2.1.8",
+    "bts-type-deps": "^0.0.3"
   },
   "engines": {
     "node": ">=8.0.0"
